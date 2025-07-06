@@ -52,8 +52,7 @@ SECRET_KEY = 'django-insecure-0oj_&u*8+jt2978f&o6h8cyj*jspg6vh0e_$p2fkbs@0#z4emt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -108,16 +107,16 @@ WSGI_APPLICATION = 'glam_hex.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'glamhex_db',
-        'USER': 'admin',
-        'PASSWORD': 'glamhex_2506_ad',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'glamhex_db',
+#         'USER': 'admin',
+#         'PASSWORD': 'glamhex_2506_ad',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
