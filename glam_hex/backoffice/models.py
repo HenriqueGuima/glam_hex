@@ -5,7 +5,7 @@ class User(models.Model):
     password = models.CharField(max_length=128)
     role = models.CharField(max_length=50, default='user')
 
-class Picture(models.Model):
+class Pictures(models.Model):
     url = models.CharField(max_length=255)
     uploaded = models.DateTimeField(auto_now_add=True)
 

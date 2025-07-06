@@ -18,7 +18,7 @@ def home_view(request):
             cursor.execute("INSERT INTO site_visits (date, count) VALUES (%s, 1)", [today])
     # Load all gallery sections
     with connection.cursor() as cursor:
-        cursor.execute("SELECT url FROM pictures")
+        cursor.execute("SELECT url FROM backoffice_pictures")
         pictures = [{'url': row[0]} for row in cursor.fetchall()]
         cursor.execute("SELECT url FROM social_makeup_pictures ORDER BY uploaded DESC")
         social_makeup_pictures = [{'url': row[0]} for row in cursor.fetchall()]
