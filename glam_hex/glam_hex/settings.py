@@ -138,6 +138,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / "frontoffice" / "static",
+    BASE_DIR / "backoffice" / "static",
 ]
 
 # Default primary key field type
