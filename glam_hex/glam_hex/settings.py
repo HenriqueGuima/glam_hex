@@ -24,24 +24,23 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-if os.environ.get("VERCEL", None):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'glamhex_db',
-            'USER': 'admin',
-            'PASSWORD': 'glamhex_2506_ad',
-            'HOST': 'localhost',
-            'PORT': '3306',
-        }
-    }
+# if os.environ.get("VERCEL", None):
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': str(BASE_DIR / 'db.sqlite3'),        }
+#     }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.mysql',
+#             'NAME': 'glamhex_db',
+#             'USER': 'admin',
+#             'PASSWORD': 'glamhex_2506_ad',
+#             'HOST': 'localhost',
+#             'PORT': '3306',
+#         }
+#     }
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -100,12 +99,12 @@ WSGI_APPLICATION = 'glam_hex.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # DATABASES = {
 #     'default': {
