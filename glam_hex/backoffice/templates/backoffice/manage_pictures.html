@@ -21,35 +21,223 @@
             </div>
           {% endif %}
         </div>
-        <div class="table-responsive">
-          <table class="table table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Preview</th>
-                <th>Filename</th>
-                <th>Uploaded</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for pic in pictures %}
-              <tr>
-                <td><img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;"></td>
-                <td>{{ pic.filename }}</td>
-                <td>{{ pic.uploaded|date:'Y-m-d H:i' }}</td>
-                <td>
-                  <form method="post" action="" class="delete-form d-inline">
+        <form method="post" id="bulk-delete-form">
+          {% csrf_token %}
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:40px;"><input type="checkbox" id="select-all"></th>
+                  <th>Preview</th>
+                  <th>Filename</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pic in pictures %}
+                <tr>
+                  <td><input type="checkbox" name="delete_ids" value="{{ pic.id }}" class="select-picture"></td>
+                  <td><img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;"></td>
+                  <td>{{ pic.filename }}</td>
+                  <td>{{ pic.uploaded|date:'Y-m-d H:i' }}</td>
+                  <td>
+                    <form method="post" action="" class="delete-form d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="delete_id" value="{{ pic.id }}">
+                      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this picture?')"><i class="bi bi-trash"></i> Delete</button>
+                    </form>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center">No pictures uploaded yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <button type="submit" class="btn btn-danger mt-2" id="bulk-delete-btn" disabled onclick="return confirm('Delete selected pictures?')">Delete Selected</button>
+        </form>
+        <div class="row g-4">
+          <!-- Social Makeup Gallery -->
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header bg-info text-white">Social Makeup Gallery</div>
+              <div class="card-body">
+                <a href="{% url 'backoffice_upload_social_makeup_picture' %}" class="btn btn-outline-info mb-3">Upload Social Makeup</a>
+                {% if social_makeup_pictures %}
+                  <form method="post" class="gallery-delete-form">
                     {% csrf_token %}
-                    <input type="hidden" name="delete_id" value="{{ pic.id }}">
-                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this picture?')"><i class="bi bi-trash"></i> Delete</button>
+                    <input type="hidden" name="gallery_type" value="social_makeup">
+                    <div class="mb-2">
+                      <input type="checkbox" class="gallery-select-all" data-gallery="social_makeup" id="select-all-social-makeup">
+                      <label for="select-all-social-makeup" class="small ms-1">Select All</label>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:10px;">
+                      {% for pic in social_makeup_pictures %}
+                        <div style="position:relative;display:inline-block;">
+                          <input type="checkbox" name="delete_ids" value="{{ pic.id }}" class="gallery-select-checkbox position-absolute" style="top:4px;left:4px;z-index:2;" data-gallery="social_makeup">
+                          <img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-sm mt-2 gallery-bulk-delete-btn" disabled onclick="return confirm('Delete selected pictures?')">Delete Selected</button>
                   </form>
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="4" class="text-center">No pictures uploaded yet.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+                {% else %}
+                  <div class="text-muted">No social makeup pictures uploaded yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <!-- Glow Gallery -->
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header bg-warning text-dark">Glow Gallery</div>
+              <div class="card-body">
+                <a href="{% url 'backoffice_upload_glow_picture' %}" class="btn btn-outline-warning mb-3">Upload Glow</a>
+                {% if glow_pictures %}
+                  <form method="post" class="gallery-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="gallery_type" value="glow">
+                    <div class="mb-2">
+                      <input type="checkbox" class="gallery-select-all" data-gallery="glow" id="select-all-glow">
+                      <label for="select-all-glow" class="small ms-1">Select All</label>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:10px;">
+                      {% for pic in glow_pictures %}
+                        <div style="position:relative;display:inline-block;">
+                          <input type="checkbox" name="delete_ids" value="{{ pic.id }}" class="gallery-select-checkbox position-absolute" style="top:4px;left:4px;z-index:2;" data-gallery="glow">
+                          <img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-sm mt-2 gallery-bulk-delete-btn" disabled onclick="return confirm('Delete selected pictures?')">Delete Selected</button>
+                  </form>
+                {% else %}
+                  <div class="text-muted">No glow pictures uploaded yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <!-- Mature Gallery -->
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header bg-dark text-white">Mature Gallery</div>
+              <div class="card-body">
+                <a href="{% url 'backoffice_upload_mature_picture' %}" class="btn btn-outline-dark mb-3">Upload Mature</a>
+                {% if mature_pictures %}
+                  <form method="post" class="gallery-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="gallery_type" value="mature">
+                    <div class="mb-2">
+                      <input type="checkbox" class="gallery-select-all" data-gallery="mature" id="select-all-mature">
+                      <label for="select-all-mature" class="small ms-1">Select All</label>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:10px;">
+                      {% for pic in mature_pictures %}
+                        <div style="position:relative;display:inline-block;">
+                          <input type="checkbox" name="delete_ids" value="{{ pic.id }}" class="gallery-select-checkbox position-absolute" style="top:4px;left:4px;z-index:2;" data-gallery="mature">
+                          <img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-sm mt-2 gallery-bulk-delete-btn" disabled onclick="return confirm('Delete selected pictures?')">Delete Selected</button>
+                  </form>
+                {% else %}
+                  <div class="text-muted">No mature pictures uploaded yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <!-- Natural Gallery -->
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header bg-success text-white">Natural Gallery</div>
+              <div class="card-body">
+                <a href="{% url 'backoffice_upload_natural_picture' %}" class="btn btn-outline-success mb-3">Upload Natural</a>
+                {% if natural_pictures %}
+                  <form method="post" class="gallery-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="gallery_type" value="natural">
+                    <div class="mb-2">
+                      <input type="checkbox" class="gallery-select-all" data-gallery="natural" id="select-all-natural">
+                      <label for="select-all-natural" class="small ms-1">Select All</label>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:10px;">
+                      {% for pic in natural_pictures %}
+                        <div style="position:relative;display:inline-block;">
+                          <input type="checkbox" name="delete_ids" value="{{ pic.id }}" class="gallery-select-checkbox position-absolute" style="top:4px;left:4px;z-index:2;" data-gallery="natural">
+                          <img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-sm mt-2 gallery-bulk-delete-btn" disabled onclick="return confirm('Delete selected pictures?')">Delete Selected</button>
+                  </form>
+                {% else %}
+                  <div class="text-muted">No natural pictures uploaded yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <!-- Artistic Gallery -->
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header bg-secondary text-white">Artistic Gallery</div>
+              <div class="card-body">
+                <a href="{% url 'backoffice_upload_artistic_picture' %}" class="btn btn-outline-secondary mb-3">Upload Artistic</a>
+                {% if artistic_pictures %}
+                  <form method="post" class="gallery-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="gallery_type" value="artistic">
+                    <div class="mb-2">
+                      <input type="checkbox" class="gallery-select-all" data-gallery="artistic" id="select-all-artistic">
+                      <label for="select-all-artistic" class="small ms-1">Select All</label>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:10px;">
+                      {% for pic in artistic_pictures %}
+                        <div style="position:relative;display:inline-block;">
+                          <input type="checkbox" name="delete_ids" value="{{ pic.id }}" class="gallery-select-checkbox position-absolute" style="top:4px;left:4px;z-index:2;" data-gallery="artistic">
+                          <img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-sm mt-2 gallery-bulk-delete-btn" disabled onclick="return confirm('Delete selected pictures?')">Delete Selected</button>
+                  </form>
+                {% else %}
+                  <div class="text-muted">No artistic pictures uploaded yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <!-- Videoclips gallery -->
+           <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header bg-secondary text-white">Videoclip Gallery</div>
+              <div class="card-body">
+                <a href="{% url 'backoffice_upload_videoclip_picture' %}" class="btn btn-outline-secondary mb-3">Upload Videoclip</a>
+                {% if videoclip_pictures %}
+                  <form method="post" class="gallery-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="gallery_type" value="videoclip">
+                    <div class="mb-2">
+                      <input type="checkbox" class="gallery-select-all" data-gallery="videoclip" id="select-all-videoclip">
+                      <label for="select-all-videoclip" class="small ms-1">Select All</label>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:10px;">
+                      {% for pic in videoclip_pictures %}
+                        <div style="position:relative;display:inline-block;">
+                          <input type="checkbox" name="delete_ids" value="{{ pic.id }}" class="gallery-select-checkbox position-absolute" style="top:4px;left:4px;z-index:2;" data-gallery="videoclip">
+                          <img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-sm mt-2 gallery-bulk-delete-btn" disabled onclick="return confirm('Delete selected pictures?')">Delete Selected</button>
+                  </form>
+                {% else %}
+                  <div class="text-muted">No videoclip pictures uploaded yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
         {% if message %}
           <div class="alert alert-success mt-3">{{ message }}</div>
@@ -62,7 +250,75 @@
   </div>
 </div>
 <script>
+// Spinner for single delete
 document.querySelectorAll('.delete-form').forEach(function(form) {
+  form.addEventListener('submit', function() {
+    var spinner = document.createElement('div');
+    spinner.style.position = 'fixed';
+    spinner.style.top = 0;
+    spinner.style.left = 0;
+    spinner.style.width = '100vw';
+    spinner.style.height = '100vh';
+    spinner.style.background = 'rgba(255,255,255,0.9)';
+    spinner.style.zIndex = 9999;
+    spinner.style.display = 'flex';
+    spinner.style.alignItems = 'center';
+    spinner.style.justifyContent = 'center';
+    spinner.innerHTML = '<div class="spinner-border text-primary" style="width:60px;height:60px;" role="status"></div>';
+    document.body.appendChild(spinner);
+  });
+});
+// Bulk select logic for main table
+const selectAll = document.getElementById('select-all');
+const checkboxes = document.querySelectorAll('.select-picture');
+const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+if (selectAll) {
+  selectAll.addEventListener('change', function() {
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    bulkDeleteBtn.disabled = !Array.from(checkboxes).some(cb => cb.checked);
+  });
+}
+checkboxes.forEach(cb => {
+  cb.addEventListener('change', function() {
+    if (!cb.checked) selectAll.checked = false;
+    bulkDeleteBtn.disabled = !Array.from(checkboxes).some(c => c.checked);
+  });
+});
+// Spinner for bulk delete main table
+document.getElementById('bulk-delete-form')?.addEventListener('submit', function() {
+  var spinner = document.createElement('div');
+  spinner.style.position = 'fixed';
+  spinner.style.top = 0;
+  spinner.style.left = 0;
+  spinner.style.width = '100vw';
+  spinner.style.height = '100vh';
+  spinner.style.background = 'rgba(255,255,255,0.9)';
+  spinner.style.zIndex = 9999;
+  spinner.style.display = 'flex';
+  spinner.style.alignItems = 'center';
+  spinner.style.justifyContent = 'center';
+  spinner.innerHTML = '<div class="spinner-border text-primary" style="width:60px;height:60px;" role="status"></div>';
+  document.body.appendChild(spinner);
+});
+// Bulk select logic for gallery sections (with select all)
+document.querySelectorAll('.gallery-delete-form').forEach(function(form) {
+  const galleryType = form.querySelector('.gallery-select-all')?.getAttribute('data-gallery');
+  const selectAll = form.querySelector('.gallery-select-all');
+  const checkboxes = form.querySelectorAll('.gallery-select-checkbox');
+  const btn = form.querySelector('.gallery-bulk-delete-btn');
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      checkboxes.forEach(cb => cb.checked = selectAll.checked);
+      btn.disabled = !Array.from(checkboxes).some(c => c.checked);
+    });
+  }
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (!cb.checked && selectAll) selectAll.checked = false;
+      if (selectAll && Array.from(checkboxes).every(c => c.checked)) selectAll.checked = true;
+      btn.disabled = !Array.from(checkboxes).some(c => c.checked);
+    });
+  });
   form.addEventListener('submit', function() {
     var spinner = document.createElement('div');
     spinner.style.position = 'fixed';

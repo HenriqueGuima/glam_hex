@@ -16,10 +16,23 @@ def home_view(request):
             cursor.execute("UPDATE site_visits SET count = count + 1 WHERE date=%s", [today])
         else:
             cursor.execute("INSERT INTO site_visits (date, count) VALUES (%s, 1)", [today])
-    # Load pictures from the database (assuming a 'pictures' table with a 'url' column)
+    # Load all gallery sections
     with connection.cursor() as cursor:
         cursor.execute("SELECT url FROM pictures")
         pictures = [{'url': row[0]} for row in cursor.fetchall()]
+        cursor.execute("SELECT url FROM social_makeup_pictures ORDER BY uploaded DESC")
+        social_makeup_pictures = [{'url': row[0]} for row in cursor.fetchall()]
+        cursor.execute("SELECT url FROM glow_pictures ORDER BY uploaded DESC")
+        glow_pictures = [{'url': row[0]} for row in cursor.fetchall()]
+        cursor.execute("SELECT url FROM mature_pictures ORDER BY uploaded DESC")
+        mature_pictures = [{'url': row[0]} for row in cursor.fetchall()]
+        cursor.execute("SELECT url FROM natural_pictures ORDER BY uploaded DESC")
+        natural_pictures = [{'url': row[0]} for row in cursor.fetchall()]
+        cursor.execute("SELECT url FROM artistic_pictures ORDER BY uploaded DESC")
+        artistic_pictures = [{'url': row[0]} for row in cursor.fetchall()]
+        cursor.execute("SELECT url FROM videoclip_pictures ORDER BY uploaded DESC")
+        videoclip_pictures = [{'url': row[0]} for row in cursor.fetchall()]
+
     # Load banner image (latest)
     banner_url = None
     with connection.cursor() as cursor:
@@ -56,6 +69,12 @@ def home_view(request):
         'about_url': about_url,
         'contact_message': contact_message,
         'contact_error': contact_error,
+        'social_makeup_pictures': social_makeup_pictures,
+        'glow_pictures': glow_pictures,
+        'mature_pictures': mature_pictures,
+        'natural_pictures': natural_pictures,
+        'artistic_pictures': artistic_pictures,
+        'videoclip_pictures': videoclip_pictures,
     })
 
 def about_view(request):

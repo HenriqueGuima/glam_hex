@@ -1,27 +1,27 @@
 {% extends 'backoffice/dashboard_bootstrap.html' %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-8 col-lg-7">
+  <div class="col-lg-8">
     <div class="card shadow-sm mt-4">
       <div class="card-body">
         <a href="{% url 'backoffice_manage_pictures' %}" class="btn btn-link mb-3">
           &larr; Back to Manage Pictures
         </a>
-        <h3 class="card-title mb-4">Upload Banner Image</h3>
-        {% if banner_url %}
-          <div class="mb-3 text-center">
-            <img src="{{ banner_url }}" alt="Current Banner" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;box-shadow:0 2px 8px #ccc;">
-            <div class="text-muted small mt-2">Current banner</div>
-          </div>
-        {% endif %}
+        <h3 class="card-title mb-4">Upload Social Makeup Picture</h3>
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="mb-3">
-            <label for="banner" class="form-label">Select Banner Image</label>
-            <input type="file" class="form-control" id="banner" name="banner" accept="image/*" required>
+            <label class="form-label">Select Image</label>
+            <input type="file" name="social_picture" class="form-control" accept="image/*" required>
           </div>
-          <button type="submit" class="btn btn-primary w-100">Upload Banner</button>
+          <button type="submit" class="btn btn-info">Upload</button>
         </form>
+        {% if social_url %}
+          <div class="mt-4">
+            <div class="fw-bold mb-2">Latest Uploaded:</div>
+            <img src="{{ social_url }}" alt="Social Makeup" style="max-width:300px;max-height:200px;border-radius:8px;box-shadow:0 1px 4px #ccc;">
+          </div>
+        {% endif %}
         {% if message %}
           <div class="alert alert-success mt-3">{{ message }}</div>
         {% endif %}

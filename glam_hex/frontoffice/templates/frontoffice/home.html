@@ -72,12 +72,78 @@
 <section class="gallery-section" id="gallery">
     <h2 class="gallery-title">Gallery</h2>
     <div class="container">
-        <div class="gallery-grid">
+         <div class="gallery-grid">
             {% for pic in pictures %}
                 <img src="{{ pic.url }}" alt="Makeup work" class="gallery-img">
             {% empty %}
                 <p class="text-center">No pictures in the gallery yet.</p>
             {% endfor %}
+        </div>
+        <!-- Social Makeup Gallery -->
+        <h3 class="mt-5 mb-3" style="color:#17a2b8;">Social Makeup</h3>
+        <div class="gallery-grid mb-4">
+            {% if social_makeup_pictures %}
+                {% for pic in social_makeup_pictures %}
+                    <img src="{{ pic.url }}" alt="Social Makeup" class="gallery-img">
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No social makeup pictures yet.</p>
+            {% endif %}
+        </div>
+        <!-- Glow Gallery -->
+        <h3 class="mt-5 mb-3" style="color:#ffc107;">Glow</h3>
+        <div class="gallery-grid mb-4">
+            {% if glow_pictures %}
+                {% for pic in glow_pictures %}
+                    <img src="{{ pic.url }}" alt="Glow Makeup" class="gallery-img">
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No glow pictures yet.</p>
+            {% endif %}
+        </div>
+        <!-- Mature Gallery -->
+        <h3 class="mt-5 mb-3" style="color:#343a40;">Mature</h3>
+        <div class="gallery-grid mb-4">
+            {% if mature_pictures %}
+                {% for pic in mature_pictures %}
+                    <img src="{{ pic.url }}" alt="Mature Makeup" class="gallery-img">
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No mature makeup pictures yet.</p>
+            {% endif %}
+        </div>
+        <!-- Natural Gallery -->
+        <h3 class="mt-5 mb-3" style="color:#28a745;">Natural</h3>
+        <div class="gallery-grid mb-4">
+            {% if natural_pictures %}
+                {% for pic in natural_pictures %}
+                    <img src="{{ pic.url }}" alt="Natural Makeup" class="gallery-img">
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No natural makeup pictures yet.</p>
+            {% endif %}
+        </div>
+        <!-- Artistic Gallery -->
+        <h3 class="mt-5 mb-3" style="color:#6c757d;">Artistic</h3>
+        <div class="gallery-grid mb-4">
+            {% if artistic_pictures %}
+                {% for pic in artistic_pictures %}
+                    <img src="{{ pic.url }}" alt="Artistic Makeup" class="gallery-img">
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No artistic makeup pictures yet.</p>
+            {% endif %}
+        </div>
+        <!-- Videoclip Gallery -->
+        <h3 class="mt-5 mb-3" style="color:#198754;">Videoclip</h3>
+        <div class="gallery-grid mb-4">
+            {% if videoclip_pictures %}
+                {% for pic in videoclip_pictures %}
+                    <img src="{{ pic.url }}" alt="Videoclip Gallery" class="gallery-img">
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No videoclip pictures yet.</p>
+            {% endif %}
         </div>
     </div>
 </section>

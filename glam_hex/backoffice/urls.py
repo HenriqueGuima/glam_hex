@@ -12,4 +12,11 @@ urlpatterns = [
     path('upload-banner/', views.upload_banner_view, name='backoffice_upload_banner'),
     path('upload-about-picture/', views.upload_about_picture_view, name='backoffice_upload_about_picture'),
     path('calendar/', views.calendar_view, name='backoffice_calendar'),
+    path('upload-social-makeup/', views.upload_social_makeup_picture_view, name='backoffice_upload_social_makeup_picture'),
+    path('upload-glow/', views.upload_glow_picture_view, name='backoffice_upload_glow_picture'),
+    path('upload-mature/', views.upload_mature_picture_view, name='backoffice_upload_mature_picture'),
+    path('upload-natural/', views.upload_natural_picture_view, name='backoffice_upload_natural_picture'),
+    path('upload-artistic/', views.upload_artistic_picture_view, name='backoffice_upload_artistic_picture'),
+    path('upload-videoclip/', views.upload_videoclip_picture_view, name='backoffice_upload_videoclip_picture'),
+    path('calendar-export/', views.calendar_export_ics, name='backoffice_calendar_export_ics'),
 ]

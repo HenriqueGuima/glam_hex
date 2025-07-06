@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 
 def get_sidebar_next_appointment():
     from django.db import connection
@@ -13,6 +14,25 @@ def get_sidebar_next_appointment():
                 'description': row[3],
             }
     return None
+
+@login_required(login_url='/backoffice/login/')
+def calendar_export_ics(request):
+    from django.db import connection
+    response = HttpResponse(content_type='text/calendar')
+    response['Content-Disposition'] = 'attachment; filename="appointments.ics"'
+    response.write('BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//GlamHex//EN\r\n')
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT title, start, end, description FROM appointments")
+        for title, start, end, description in cursor.fetchall():
+            response.write('BEGIN:VEVENT\r\n')
+            response.write(f'SUMMARY:{title}\r\n')
+            response.write(f'DTSTART:{start.strftime("%Y%m%dT%H%M%S")}\r\n')
+            response.write(f'DTEND:{end.strftime("%Y%m%dT%H%M%S")}\r\n')
+            if description:
+                response.write(f'DESCRIPTION:{description}\r\n')
+            response.write('END:VEVENT\r\n')
+    response.write('END:VCALENDAR\r\n')
+    return response
 
 @login_required(login_url='/backoffice/login/')
 def calendar_view(request):
@@ -327,24 +347,86 @@ from django.utils import timezone
 def manage_pictures_view(request):
     message = None
     error = None
-    # Handle deletion
-    if request.method == 'POST' and 'delete_id' in request.POST:
-        pic_id = request.POST.get('delete_id')
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT url FROM pictures WHERE id=%s", [pic_id])
-            row = cursor.fetchone()
-            if row:
-                file_path = row[0].lstrip('/')
-                abs_path = os.path.join(settings.BASE_DIR, file_path)
-                try:
-                    if os.path.exists(abs_path):
-                        os.remove(abs_path)
-                    cursor.execute("DELETE FROM pictures WHERE id=%s", [pic_id])
-                    message = 'Picture deleted.'
-                except Exception as e:
-                    error = f'Error deleting picture: {e}'
-            else:
-                error = 'Picture not found.'
+    # Handle single and bulk deletion for all galleries
+    if request.method == 'POST':
+        # Main gallery (pictures table)
+        if 'delete_ids' in request.POST and request.POST.get('gallery_type', 'main') == 'main':
+            delete_ids = request.POST.getlist('delete_ids')
+            if delete_ids:
+                deleted_count = 0
+                with connection.cursor() as cursor:
+                    for pic_id in delete_ids:
+                        cursor.execute("SELECT url FROM pictures WHERE id=%s", [pic_id])
+                        row = cursor.fetchone()
+                        if row:
+                            file_path = row[0].lstrip('/')
+                            abs_path = os.path.join(settings.BASE_DIR, file_path)
+                            try:
+                                if os.path.exists(abs_path):
+                                    os.remove(abs_path)
+                                cursor.execute("DELETE FROM pictures WHERE id=%s", [pic_id])
+                                deleted_count += 1
+                            except Exception as e:
+                                error = f'Error deleting picture: {e}'
+                                break
+                    if deleted_count:
+                        message = f'{deleted_count} picture(s) deleted.'
+                    elif not error:
+                        error = 'No pictures deleted.'
+        # Single delete (fallback for old forms)
+        elif 'delete_id' in request.POST:
+            pic_id = request.POST.get('delete_id')
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT url FROM pictures WHERE id=%s", [pic_id])
+                row = cursor.fetchone()
+                if row:
+                    file_path = row[0].lstrip('/')
+                    abs_path = os.path.join(settings.BASE_DIR, file_path)
+                    try:
+                        if os.path.exists(abs_path):
+                            os.remove(abs_path)
+                        cursor.execute("DELETE FROM pictures WHERE id=%s", [pic_id])
+                        message = 'Picture deleted.'
+                    except Exception as e:
+                        error = f'Error deleting picture: {e}'
+                else:
+                    error = 'Picture not found.'
+        # Other galleries
+        else:
+            # Map form POST to table
+            gallery_map = {
+                'social_makeup': 'social_makeup_pictures',
+                'glow': 'glow_pictures',
+                'mature': 'mature_pictures',
+                'natural': 'natural_pictures',
+                'artistic': 'artistic_pictures',
+                'videoclip': 'videoclip_pictures',
+            }
+            for gallery_key, table in gallery_map.items():
+                if f'delete_{gallery_key}' in request.POST or (request.POST.get('gallery_type') == gallery_key):
+                    delete_ids = request.POST.getlist('delete_ids')
+                    if delete_ids:
+                        deleted_count = 0
+                        with connection.cursor() as cursor:
+                            for pic_id in delete_ids:
+                                cursor.execute(f"SELECT url FROM {table} WHERE id=%s", [pic_id])
+                                row = cursor.fetchone()
+                                if row:
+                                    file_path = row[0].lstrip('/')
+                                    abs_path = os.path.join(settings.BASE_DIR, file_path)
+                                    try:
+                                        if os.path.exists(abs_path):
+                                            os.remove(abs_path)
+                                        cursor.execute(f"DELETE FROM {table} WHERE id=%s", [pic_id])
+                                        deleted_count += 1
+                                    except Exception as e:
+                                        error = f'Error deleting picture: {e}'
+                                        break
+                            if deleted_count:
+                                message = f'{deleted_count} picture(s) deleted.'
+                            elif not error:
+                                error = 'No pictures deleted.'
+                    break
     # List all pictures
     with connection.cursor() as cursor:
         cursor.execute("SELECT id, url, uploaded FROM pictures ORDER BY uploaded DESC")
@@ -372,6 +454,21 @@ def manage_pictures_view(request):
         row = cursor.fetchone()
         if row:
             about_url = row[0]
+    # Get new gallery pictures (with id for delete)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id, url FROM social_makeup_pictures ORDER BY uploaded DESC")
+        social_makeup_pictures = [{'id': row[0], 'url': row[1]} for row in cursor.fetchall()]
+        cursor.execute("SELECT id, url FROM glow_pictures ORDER BY uploaded DESC")
+        glow_pictures = [{'id': row[0], 'url': row[1]} for row in cursor.fetchall()]
+        cursor.execute("SELECT id, url FROM mature_pictures ORDER BY uploaded DESC")
+        mature_pictures = [{'id': row[0], 'url': row[1]} for row in cursor.fetchall()]
+        cursor.execute("SELECT id, url FROM natural_pictures ORDER BY uploaded DESC")
+        natural_pictures = [{'id': row[0], 'url': row[1]} for row in cursor.fetchall()]
+        cursor.execute("SELECT id, url FROM artistic_pictures ORDER BY uploaded DESC")
+        artistic_pictures = [{'id': row[0], 'url': row[1]} for row in cursor.fetchall()]
+        cursor.execute("SELECT id, url FROM videoclip_pictures ORDER BY uploaded DESC")
+        videoclip_pictures = [{'id': row[0], 'url': row[1]} for row in cursor.fetchall()]
+
     sidebar_next_appointment = get_sidebar_next_appointment()
     return render(request, 'backoffice/manage_pictures.html', {
         'pictures': pictures,
@@ -380,4 +477,239 @@ def manage_pictures_view(request):
         'banner_url': banner_url,
         'about_url': about_url,
         'sidebar_next_appointment': sidebar_next_appointment,
+        'social_makeup_pictures': social_makeup_pictures,
+        'glow_pictures': glow_pictures,
+        'mature_pictures': mature_pictures,
+        'natural_pictures': natural_pictures,
+        'artistic_pictures': artistic_pictures,
+        'videoclip_pictures': videoclip_pictures,
+
     })
+
+@login_required(login_url='/backoffice/login/')
+def upload_social_makeup_picture_view(request):
+    message = None
+    error = None
+    social_url = None
+    # Handle delete
+    if request.method == 'POST' and (request.POST.getlist('delete_ids') or request.POST.get('delete_id')):
+        from .views import delete_gallery_picture
+        message, error = delete_gallery_picture(request, 'social_makeup_pictures')
+    # Get current social makeup picture
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM social_makeup_pictures ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            social_url = row[0]
+    if request.method == 'POST' and request.FILES.get('social_picture'):
+        social_picture = request.FILES['social_picture']
+        # Save file to media/social_makeup
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'social_makeup')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'social_makeup', social_picture.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in social_picture.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO social_makeup_pictures (url) VALUES (%s)", [db_path])
+        message = 'Social makeup picture uploaded!'
+        social_url = db_path
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_social_makeup_picture.html', {'message': message, 'error': error, 'social_url': social_url, 'sidebar_next_appointment': sidebar_next_appointment})
+
+@login_required(login_url='/backoffice/login/')
+def upload_glow_picture_view(request):
+    message = None
+    error = None
+    glow_url = None
+    # Handle delete
+    if request.method == 'POST' and (request.POST.getlist('delete_ids') or request.POST.get('delete_id')):
+        from .views import delete_gallery_picture
+        message, error = delete_gallery_picture(request, 'glow_pictures')
+    # Get current glow picture
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM glow_pictures ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            glow_url = row[0]
+    if request.method == 'POST' and request.FILES.get('glow_picture'):
+        glow_picture = request.FILES['glow_picture']
+        # Save file to media/glow
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'glow')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'glow', glow_picture.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in glow_picture.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO glow_pictures (url) VALUES (%s)", [db_path])
+        message = 'Glow picture uploaded!'
+        glow_url = db_path
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_glow_picture.html', {'message': message, 'error': error, 'glow_url': glow_url, 'sidebar_next_appointment': sidebar_next_appointment})
+
+@login_required(login_url='/backoffice/login/')
+def upload_mature_picture_view(request):
+    message = None
+    error = None
+    mature_url = None
+    # Handle delete
+    if request.method == 'POST' and (request.POST.getlist('delete_ids') or request.POST.get('delete_id')):
+        from .views import delete_gallery_picture
+        message, error = delete_gallery_picture(request, 'mature_pictures')
+    # Get current mature picture
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM mature_pictures ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            mature_url = row[0]
+    if request.method == 'POST' and request.FILES.get('mature_picture'):
+        mature_picture = request.FILES['mature_picture']
+        # Save file to media/mature
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'mature')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'mature', mature_picture.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in mature_picture.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO mature_pictures (url) VALUES (%s)", [db_path])
+        message = 'Mature picture uploaded!'
+        mature_url = db_path
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_mature_picture.html', {'message': message, 'error': error, 'mature_url': mature_url, 'sidebar_next_appointment': sidebar_next_appointment})
+
+@login_required(login_url='/backoffice/login/')
+def upload_natural_picture_view(request):
+    message = None
+    error = None
+    natural_url = None
+    # Handle delete
+    if request.method == 'POST' and (request.POST.getlist('delete_ids') or request.POST.get('delete_id')):
+        from .views import delete_gallery_picture
+        message, error = delete_gallery_picture(request, 'natural_pictures')
+    # Get current natural picture
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM natural_pictures ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            natural_url = row[0]
+    if request.method == 'POST' and request.FILES.get('natural_picture'):
+        natural_picture = request.FILES['natural_picture']
+        # Save file to media/natural
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'natural')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'natural', natural_picture.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in natural_picture.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO natural_pictures (url) VALUES (%s)", [db_path])
+        message = 'Natural picture uploaded!'
+        natural_url = db_path
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_natural_picture.html', {'message': message, 'error': error, 'natural_url': natural_url, 'sidebar_next_appointment': sidebar_next_appointment})
+
+@login_required(login_url='/backoffice/login/')
+def upload_artistic_picture_view(request):
+    message = None
+    error = None
+    artistic_url = None
+    # Handle delete
+    if request.method == 'POST' and (request.POST.getlist('delete_ids') or request.POST.get('delete_id')):
+        from .views import delete_gallery_picture
+        message, error = delete_gallery_picture(request, 'artistic_pictures')
+    # Get current artistic picture
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM artistic_pictures ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            artistic_url = row[0]
+    if request.method == 'POST' and request.FILES.get('artistic_picture'):
+        artistic_picture = request.FILES['artistic_picture']
+        # Save file to media/artistic
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'artistic')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'artistic', artistic_picture.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in artistic_picture.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO artistic_pictures (url) VALUES (%s)", [db_path])
+        message = 'Artistic picture uploaded!'
+        artistic_url = db_path
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_artistic_picture.html', {'message': message, 'error': error, 'artistic_url': artistic_url, 'sidebar_next_appointment': sidebar_next_appointment})
+
+@login_required(login_url='/backoffice/login/')
+def upload_videoclip_picture_view(request):
+    message = None
+    error = None
+    videoclip_url = None
+    # Handle delete
+    if request.method == 'POST' and (request.POST.getlist('delete_ids') or request.POST.get('delete_id')):
+        from .views import delete_gallery_picture
+        message, error = delete_gallery_picture(request, 'videoclip_pictures')
+    # Get current videoclip picture
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM videoclip_pictures ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            videoclip_url = row[0]
+    if request.method == 'POST' and request.FILES.get('videoclip_picture'):
+        videoclip_picture = request.FILES['videoclip_picture']
+        # Save file to media/videoclip
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'videoclip')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'videoclip', videoclip_picture.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in videoclip_picture.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO videoclip_pictures (url) VALUES (%s)", [db_path])
+        message = 'Videoclip picture uploaded!'
+        videoclip_url = db_path
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_videoclip_picture.html', {'message': message, 'error': error, 'videoclip_url': videoclip_url, 'sidebar_next_appointment': sidebar_next_appointment})
+
+@login_required(login_url='/backoffice/login/')
+def delete_gallery_picture(request, table, id_field='id'):
+    # Generic delete for gallery tables
+    message = None
+    error = None
+    if request.method == 'POST':
+        delete_ids = request.POST.getlist('delete_ids')
+        if delete_ids:
+            deleted_count = 0
+            with connection.cursor() as cursor:
+                for pic_id in delete_ids:
+                    cursor.execute(f"SELECT url FROM {table} WHERE {id_field}=%s", [pic_id])
+                    row = cursor.fetchone()
+                    if row:
+                        file_path = row[0].lstrip('/')
+                        abs_path = os.path.join(settings.BASE_DIR, file_path)
+                        try:
+                            if os.path.exists(abs_path):
+                                os.remove(abs_path)
+                            cursor.execute(f"DELETE FROM {table} WHERE {id_field}=%s", [pic_id])
+                            deleted_count += 1
+                        except Exception as e:
+                            error = f'Error deleting picture: {e}'
+                            break
+                if deleted_count:
+                    message = f'{deleted_count} picture(s) deleted.'
+                elif not error:
+                    error = 'No pictures deleted.'
+    return message, error
