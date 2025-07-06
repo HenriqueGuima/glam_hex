@@ -20,6 +20,20 @@ def home_view(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT url FROM pictures")
         pictures = [{'url': row[0]} for row in cursor.fetchall()]
+    # Load banner image (latest)
+    banner_url = None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM banner_picture ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            banner_url = row[0]
+    # Load about section background (latest)
+    about_url = None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM about_picture ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            about_url = row[0]
     contact_message = None
     contact_error = None
     if request.method == 'POST':
@@ -36,7 +50,13 @@ def home_view(request):
                 recipient_list=[settings.DEFAULT_FROM_EMAIL],
             )
             contact_message = 'Your message has been sent!'
-    return render(request, 'frontoffice/home.html', {'pictures': pictures, 'contact_message': contact_message, 'contact_error': contact_error})
+    return render(request, 'frontoffice/home.html', {
+        'pictures': pictures,
+        'banner_url': banner_url,
+        'about_url': about_url,
+        'contact_message': contact_message,
+        'contact_error': contact_error,
+    })
 
 def about_view(request):
     return render(request, 'frontoffice/about.html')

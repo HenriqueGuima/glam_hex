@@ -1,0 +1,32 @@
+{% extends 'backoffice/dashboard_bootstrap.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-7">
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h3 class="card-title mb-4">Upload Banner Image</h3>
+        {% if banner_url %}
+          <div class="mb-3 text-center">
+            <img src="{{ banner_url }}" alt="Current Banner" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;box-shadow:0 2px 8px #ccc;">
+            <div class="text-muted small mt-2">Current banner</div>
+          </div>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="banner" class="form-label">Select Banner Image</label>
+            <input type="file" class="form-control" id="banner" name="banner" accept="image/*" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Upload Banner</button>
+        </form>
+        {% if message %}
+          <div class="alert alert-success mt-3">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+          <div class="alert alert-danger mt-3">{{ error }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,3 +1,62 @@
+from django.contrib.auth.decorators import login_required
+
+@login_required(login_url='/backoffice/login/')
+def upload_about_picture_view(request):
+    message = None
+    error = None
+    about_url = None
+    # Get current about background
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM about_picture ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            about_url = row[0]
+    if request.method == 'POST' and request.FILES.get('about_picture'):
+        about_picture = request.FILES['about_picture']
+        # Save file to media/about
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'about')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'about', about_picture.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in about_picture.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO about_picture (url) VALUES (%s)", [db_path])
+        message = 'About section background uploaded!'
+        about_url = db_path
+    return render(request, 'backoffice/upload_about_picture.html', {'message': message, 'error': error, 'about_url': about_url})
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+
+@login_required(login_url='/backoffice/login/')
+def upload_banner_view(request):
+    message = None
+    error = None
+    banner_url = None
+    # Get current banner
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM banner_picture ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            banner_url = row[0]
+    if request.method == 'POST' and request.FILES.get('banner'):
+        banner = request.FILES['banner']
+        # Save file to media/banner
+        save_dir = os.path.join(settings.BASE_DIR, 'media', 'banner')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join('media', 'banner', banner.name)
+        abs_path = os.path.join(settings.BASE_DIR, file_path)
+        with open(abs_path, 'wb+') as destination:
+            for chunk in banner.chunks():
+                destination.write(chunk)
+        db_path = '/' + file_path.replace('\\', '/')
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO banner_picture (url) VALUES (%s)", [db_path])
+        message = 'Banner image uploaded!'
+        banner_url = db_path
+    return render(request, 'backoffice/upload_banner.html', {'message': message, 'error': error, 'banner_url': banner_url})
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -207,4 +266,24 @@ def manage_pictures_view(request):
                 'uploaded': row[2] if row[2] else timezone.now(),
             }
             pictures.append(pic)
-    return render(request, 'backoffice/manage_pictures.html', {'pictures': pictures, 'message': message, 'error': error})
+    # Get current banner
+    banner_url = None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM banner_picture ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            banner_url = row[0]
+    # Get current about background
+    about_url = None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT url FROM about_picture ORDER BY uploaded DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            about_url = row[0]
+    return render(request, 'backoffice/manage_pictures.html', {
+        'pictures': pictures,
+        'message': message,
+        'error': error,
+        'banner_url': banner_url,
+        'about_url': about_url,
+    })

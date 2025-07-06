@@ -5,6 +5,22 @@
     <div class="card shadow-sm mt-4">
       <div class="card-body">
         <h3 class="card-title mb-4">Manage Pictures</h3>
+        <div class="d-flex align-items-center mb-3" style="gap:1.5em;">
+          <a href="{% url 'backoffice_upload_banner' %}" class="btn btn-outline-primary">Upload Banner Image</a>
+          {% if banner_url %}
+            <div class="border rounded p-1 bg-light" style="height:56px; display:flex; align-items:center;">
+              <img src="{{ banner_url }}" alt="Current Banner" style="height:48px; width:auto; max-width:200px; object-fit:cover; border-radius:6px; box-shadow:0 1px 4px #ccc;">
+              <span class="ms-2 text-muted small">Current Banner</span>
+            </div>
+          {% endif %}
+          <a href="{% url 'backoffice_upload_about_picture' %}" class="btn btn-outline-secondary">Upload About Background</a>
+          {% if about_url %}
+            <div class="border rounded p-1 bg-light" style="height:56px; display:flex; align-items:center;">
+              <img src="{{ about_url }}" alt="Current About Background" style="height:48px; width:auto; max-width:200px; object-fit:cover; border-radius:6px; box-shadow:0 1px 4px #ccc;">
+              <span class="ms-2 text-muted small">Current About Background</span>
+            </div>
+          {% endif %}
+        </div>
         <div class="table-responsive">
           <table class="table table-bordered align-middle">
             <thead class="table-light">

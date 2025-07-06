@@ -23,13 +23,21 @@
         .gallery-title { color: #b85fa6; text-align: center; margin-bottom: 2em; }
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5em; }
         .gallery-img { width: 100%; height: 260px; object-fit: cover; border-radius: 12px; box-shadow: 0 2px 8px #ccc; }
-        .about-section { background: #fff; padding: 3em 0; }
+.about-section {
+    background: #fff;
+    min-height: 100vh;
+    height: 100vh;
+    width: 100vw;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+}
         .about-card { max-width: 700px; margin: auto; border-radius: 16px; box-shadow: 0 2px 12px #f3e1f4; padding: 2em; }
         .contact-section { background: #f8e1f4; padding: 3em 0; }
         .contact-card { max-width: 500px; margin: auto; border-radius: 16px; box-shadow: 0 2px 12px #e9ecef; padding: 2em; background: #fff; }
         .nav-link { color: #b85fa6 !important; font-weight: 500; }
         .nav-link.active, .nav-link:focus { color: #fff !important; background: #b85fa6 !important; border-radius: 6px; }
-        .navbar { background: #fff; box-shadow: 0 2px 8px #f8e1f4; }
+        .navbar { background: #fff; }
         .form-label { color: #b85fa6; font-weight: 500; }
         .btn-primary { background: #b85fa6; border: none; }
         .btn-primary:hover { background: #a04e8e; }
@@ -52,9 +60,14 @@
     </div>
   </div>
 </nav>
-<div class="hero">
-    <h1>Makeup by GlamHex</h1>
-    <p>Enhancing beauty, one brush at a time.</p>
+<div class="hero position-relative p-0" style="overflow:hidden; min-height:100vh; height:100vh; width:100vw;">
+    {% if banner_url %}
+        <img src="{{ banner_url }}" alt="Banner" style="width:100vw; min-width:100vw; height:100vh; min-height:100vh; object-fit:cover; position:absolute; top:0; left:0; z-index:0;">
+    {% endif %}
+    <div style="position:relative; z-index:2; width:100vw; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgb(0 0 0 / 45%);">
+        <h1>Makeup by GlamHex</h1>
+        <p>Enhancing beauty, one brush at a time.</p>
+    </div>
 </div>
 <section class="gallery-section" id="gallery">
     <h2 class="gallery-title">Gallery</h2>
@@ -69,9 +82,12 @@
     </div>
 </section>
 <section class="about-section" id="about">
-    <div class="about-card">
+    {% if about_url %}
+        <img src="{{ about_url }}" alt="About Background" style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;">
+    {% endif %}
+    <div class="about-card d-flex flex-column justify-content-center align-items-center text-center" style="position:relative;z-index:2;background:rgba(0,0,0,0.45);height:100vh;min-height:100vh;width:100vw;max-width:100vw;">
         <h2 class="mb-3" style="color:#b85fa6;">About Me</h2>
-        <p>Professional makeup artist with a passion for creativity and detail. Specializing in bridal, editorial, and event makeup. My mission is to help you feel confident and beautiful for every occasion.</p>
+        <p style="max-width:600px;">Professional makeup artist with a passion for creativity and detail. Specializing in bridal, editorial, and event makeup. My mission is to help you feel confident and beautiful for every occasion.</p>
     </div>
 </section>
 <section class="contact-section" id="contact">
@@ -105,6 +121,19 @@
         </div>
     </div>
 </section>
+</section>
+<footer class="py-4 bg-white border-top mt-5">
+  <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+    <div class="mb-3 mb-md-0">
+      <a href="https://coff.ee/glam_hex" target="_blank" rel="noopener" class="btn btn-warning" style="color:#fff;font-weight:600;background:#ff813f;border:none;">
+        <i class="bi bi-cup-hot-fill me-2"></i>Buy me a coffee
+      </a>
+    </div>
+    <div class="text-muted small">
+      Developed by <a href="https://github.com/HenriqueGuima" target="_blank" rel="noopener" style="color:#b85fa6;font-weight:600;">HenriqueGuima</a>
+    </div>
+  </div>
+</footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Smooth scroll for nav links
