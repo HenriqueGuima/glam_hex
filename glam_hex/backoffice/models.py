@@ -4,7 +4,6 @@ class User(models.Model):
     username = models.CharField(max_length=150, unique=True)
     password = models.CharField(max_length=128)
     role = models.CharField(max_length=50, default='user')
-    # You can add more fields as needed
 
 class Picture(models.Model):
     url = models.CharField(max_length=255)
@@ -24,7 +23,7 @@ class Appointment(models.Model):
     end = models.DateTimeField()
     description = models.TextField(blank=True, null=True)
 
-class SiteVisit(models.Model):
+class SiteVisits(models.Model):
     date = models.DateField(unique=True)
     count = models.IntegerField(default=0)
 
