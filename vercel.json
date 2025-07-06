@@ -1,10 +1,10 @@
 {
   "builds": [
-    { "src": "manage.py", "use": "@vercel/python", "config": { "maxLambdaSize": "50mb" } }
+    { "src": "glam_hex/wsgi.py", "use": "@vercel/python", "config": { "maxLambdaSize": "50mb" } }
   ],
   "routes": [
     { "src": "/static/(.*)", "dest": "/static/$1" },
     { "src": "/media/(.*)", "dest": "/media/$1" },
-    { "src": "/(.*)", "dest": "/manage.py" }
+    { "src": "/(.*)", "dest": "/glam_hex/wsgi.py" }
   ]
 }
