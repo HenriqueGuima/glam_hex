@@ -1,0 +1,73 @@
+{% extends 'backoffice/dashboard_bootstrap.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h3 class="card-title mb-4">Add Pictures to Gallery</h3>
+        <form method="post" enctype="multipart/form-data" id="upload-form">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="picture" class="form-label">Select Images or Drag & Drop</label>
+            <input type="file" class="form-control" name="pictures" id="picture" accept="image/*" multiple required>
+            <div id="drop-area" class="border border-2 border-dashed rounded p-3 text-center my-2 bg-light text-secondary" style="cursor:pointer;">Drag & Drop Images Here</div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Upload</button>
+        </form>
+        <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('picture');
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.background = '#ffe6fa';
+        });
+        dropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropArea.style.background = '#f8e1f4';
+        });
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.background = '#f8e1f4';
+            const files = e.dataTransfer.files;
+            fileInput.files = files;
+        });
+        dropArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+            dropArea.textContent = fileInput.files.length + ' file(s) selected';
+        });
+        document.getElementById('upload-form').addEventListener('submit', function() {
+          var spinner = document.createElement('div');
+          spinner.style.position = 'fixed';
+          spinner.style.top = 0;
+          spinner.style.left = 0;
+          spinner.style.width = '100vw';
+          spinner.style.height = '100vh';
+          spinner.style.background = 'rgba(255,255,255,0.9)';
+          spinner.style.zIndex = 9999;
+          spinner.style.display = 'flex';
+          spinner.style.alignItems = 'center';
+          spinner.style.justifyContent = 'center';
+          spinner.innerHTML = '<div class="spinner-border text-primary" style="width:60px;height:60px;" role="status"></div>';
+          document.body.appendChild(spinner);
+        });
+        </script>
+        {% if message %}
+          <div class="alert alert-success mt-3">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+          <div class="alert alert-danger mt-3">{{ error }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+    </div>
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+</body>
+</html>

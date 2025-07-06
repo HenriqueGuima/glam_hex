@@ -1,0 +1,44 @@
+{% extends 'backoffice/dashboard_bootstrap.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h3 class="card-title mb-4">Manage My Account</h3>
+        <form method="post" id="main-form">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" name="username" id="username" value="{{ user.username }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">New Password</label>
+            <input type="password" class="form-control" name="password" id="password">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Update</button>
+        </form>
+        {% if message %}
+          <div class="alert alert-success mt-3">{{ message }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.getElementById('main-form').addEventListener('submit', function() {
+  var spinner = document.createElement('div');
+  spinner.style.position = 'fixed';
+  spinner.style.top = 0;
+  spinner.style.left = 0;
+  spinner.style.width = '100vw';
+  spinner.style.height = '100vh';
+  spinner.style.background = 'rgba(255,255,255,0.9)';
+  spinner.style.zIndex = 9999;
+  spinner.style.display = 'flex';
+  spinner.style.alignItems = 'center';
+  spinner.style.justifyContent = 'center';
+  spinner.innerHTML = '<div class="spinner-border text-primary" style="width:60px;height:60px;" role="status"></div>';
+  document.body.appendChild(spinner);
+});
+</script>
+{% endblock %}

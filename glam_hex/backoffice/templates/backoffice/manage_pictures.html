@@ -1,0 +1,67 @@
+{% extends 'backoffice/dashboard_bootstrap.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h3 class="card-title mb-4">Manage Pictures</h3>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Preview</th>
+                <th>Filename</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pic in pictures %}
+              <tr>
+                <td><img src="{{ pic.url }}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;"></td>
+                <td>{{ pic.filename }}</td>
+                <td>{{ pic.uploaded|date:'Y-m-d H:i' }}</td>
+                <td>
+                  <form method="post" action="" class="delete-form d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_id" value="{{ pic.id }}">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this picture?')"><i class="bi bi-trash"></i> Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center">No pictures uploaded yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if message %}
+          <div class="alert alert-success mt-3">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+          <div class="alert alert-danger mt-3">{{ error }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.delete-form').forEach(function(form) {
+  form.addEventListener('submit', function() {
+    var spinner = document.createElement('div');
+    spinner.style.position = 'fixed';
+    spinner.style.top = 0;
+    spinner.style.left = 0;
+    spinner.style.width = '100vw';
+    spinner.style.height = '100vh';
+    spinner.style.background = 'rgba(255,255,255,0.9)';
+    spinner.style.zIndex = 9999;
+    spinner.style.display = 'flex';
+    spinner.style.alignItems = 'center';
+    spinner.style.justifyContent = 'center';
+    spinner.innerHTML = '<div class="spinner-border text-primary" style="width:60px;height:60px;" role="status"></div>';
+    document.body.appendChild(spinner);
+  });
+});
+</script>
+{% endblock %}
