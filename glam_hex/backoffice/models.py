@@ -23,9 +23,12 @@ class Appointment(models.Model):
     end = models.DateTimeField()
     description = models.TextField(blank=True, null=True)
 
-class SiteVisits(models.Model):
+class SiteVisit(models.Model):
     date = models.DateField(unique=True)
     count = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'site_visits'
 
 class SocialMakeupPicture(models.Model):
     url = models.CharField(max_length=255)
