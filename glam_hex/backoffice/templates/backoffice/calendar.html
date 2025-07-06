@@ -1,0 +1,127 @@
+{% extends 'backoffice/dashboard_bootstrap.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h3 class="card-title mb-4">Appointments Calendar</h3>
+        <div id="calendar"></div>
+        <form id="add-appointment-form" class="mt-4" method="post">
+          {% csrf_token %}
+          <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label">Title</label>
+              <input type="text" name="title" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Start</label>
+              <input type="datetime-local" name="start" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">End</label>
+              <input type="datetime-local" name="end" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Description</label>
+              <input type="text" name="description" class="form-control">
+            </div>
+            <div class="col-md-1">
+              <button type="submit" class="btn btn-primary w-100">Add</button>
+            </div>
+          </div>
+        </form>
+        {% if message %}
+          <div class="alert alert-success mt-3">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+          <div class="alert alert-danger mt-3">{{ error }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var calendarEl = document.getElementById('calendar');
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 600,
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    events: '/backoffice/calendar/?fetch=1',
+    eventClick: function(info) {
+      // Show modal for edit/delete
+      const event = info.event;
+      const desc = event.extendedProps.description || '';
+      const modalHtml = `
+        <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">Edit Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form id="edit-event-form">
+                <div class="modal-body">
+                  <input type="hidden" name="id" value="${event.id}">
+                  <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-control" value="${event.title}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Start</label>
+                    <input type="datetime-local" name="start" class="form-control" value="${event.startStr.replace(' ', 'T')}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">End</label>
+                    <input type="datetime-local" name="end" class="form-control" value="${event.endStr.replace(' ', 'T')}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <input type="text" name="description" class="form-control" value="${desc}">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger me-auto" id="delete-event-btn">Delete</button>
+                  <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>`;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+      eventModal.show();
+      document.getElementById('eventModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('eventModal').remove();
+      });
+      document.getElementById('delete-event-btn').onclick = function() {
+        if (confirm('Delete this appointment?')) {
+          fetch('/backoffice/calendar/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+            body: new URLSearchParams({ id: event.id, delete: 1 })
+          }).then(() => { window.location.reload(); });
+        }
+      };
+      document.getElementById('edit-event-form').onsubmit = function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        formData.append('edit', 1);
+        fetch('/backoffice/calendar/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+          body: new URLSearchParams(formData)
+        }).then(() => { window.location.reload(); });
+      };
+    }
+  });
+  calendar.render();
+});
+</script>
+{% endblock %}

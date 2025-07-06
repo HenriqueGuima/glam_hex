@@ -38,6 +38,17 @@
             {% block content %}
             <h2>Welcome to the Backoffice Dashboard</h2>
             <p class="lead">You are logged in as <strong>{{ user.username }}</strong>.</p>
+            {% if next_appointment %}
+            <div class="alert alert-info d-flex align-items-center" role="alert" style="font-size:1.1em;">
+                <i class="bi bi-calendar-event me-2"></i>
+                <div>
+                  <strong>Next Appointment:</strong>
+                  {{ next_appointment.title }}<br>
+                  <span class="text-muted">{{ next_appointment.start|date:'M d, Y H:i' }} - {{ next_appointment.end|date:'H:i' }}</span>
+                  {% if next_appointment.description %}<br><span class="text-muted">{{ next_appointment.description }}</span>{% endif %}
+                </div>
+            </div>
+            {% endif %}
             <div class="card mt-4">
                 <div class="card-body">
                     <h5 class="card-title">Site Visits (Last 30 Days)</h5>

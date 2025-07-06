@@ -1,5 +1,77 @@
 from django.contrib.auth.decorators import login_required
 
+def get_sidebar_next_appointment():
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT title, start, end, description FROM appointments WHERE start > NOW() ORDER BY start ASC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            return {
+                'title': row[0],
+                'start': row[1],
+                'end': row[2],
+                'description': row[3],
+            }
+    return None
+
+@login_required(login_url='/backoffice/login/')
+def calendar_view(request):
+    import json
+    from django.http import JsonResponse
+    if request.method == 'GET' and request.GET.get('fetch') == '1':
+        # Return all appointments as JSON for JS calendar
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id, title, start, end, description FROM appointments")
+            events = [
+                {
+                    'id': row[0],
+                    'title': row[1],
+                    'start': row[2].strftime('%Y-%m-%dT%H:%M'),
+                    'end': row[3].strftime('%Y-%m-%dT%H:%M'),
+                    'description': row[4] or ''
+                }
+                for row in cursor.fetchall()
+            ]
+        return JsonResponse(events, safe=False)
+    message = None
+    error = None
+    # Handle edit/delete/new appointment
+    if request.method == 'POST':
+        # Delete
+        if request.POST.get('delete') and request.POST.get('id'):
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM appointments WHERE id=%s", [request.POST['id']])
+            return JsonResponse({'deleted': True})
+        # Edit
+        elif request.POST.get('edit') and request.POST.get('id'):
+            title = request.POST.get('title')
+            start = request.POST.get('start')
+            end = request.POST.get('end')
+            description = request.POST.get('description')
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE appointments SET title=%s, start=%s, end=%s, description=%s WHERE id=%s",
+                    [title, start, end, description, request.POST['id']]
+                )
+            return JsonResponse({'updated': True})
+        # New
+        else:
+            title = request.POST.get('title')
+            start = request.POST.get('start')
+            end = request.POST.get('end')
+            description = request.POST.get('description')
+            if not title or not start or not end:
+                error = 'Title, start, and end are required.'
+            else:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "INSERT INTO appointments (title, start, end, description) VALUES (%s, %s, %s, %s)",
+                        [title, start, end, description]
+                    )
+                message = 'Appointment added.'
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/calendar.html', {'message': message, 'error': error, 'sidebar_next_appointment': sidebar_next_appointment})
+
 @login_required(login_url='/backoffice/login/')
 def upload_about_picture_view(request):
     message = None
@@ -26,7 +98,8 @@ def upload_about_picture_view(request):
             cursor.execute("INSERT INTO about_picture (url) VALUES (%s)", [db_path])
         message = 'About section background uploaded!'
         about_url = db_path
-    return render(request, 'backoffice/upload_about_picture.html', {'message': message, 'error': error, 'about_url': about_url})
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_about_picture.html', {'message': message, 'error': error, 'about_url': about_url, 'sidebar_next_appointment': sidebar_next_appointment})
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
@@ -56,7 +129,8 @@ def upload_banner_view(request):
             cursor.execute("INSERT INTO banner_picture (url) VALUES (%s)", [db_path])
         message = 'Banner image uploaded!'
         banner_url = db_path
-    return render(request, 'backoffice/upload_banner.html', {'message': message, 'error': error, 'banner_url': banner_url})
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/upload_banner.html', {'message': message, 'error': error, 'banner_url': banner_url, 'sidebar_next_appointment': sidebar_next_appointment})
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -112,9 +186,24 @@ def dashboard_view(request):
         for i, d in enumerate(labels):
             if d in date_to_count:
                 data[i] = date_to_count[d]
+    # Get next appointment
+    next_appointment = None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT title, start, end, description FROM appointments WHERE start > NOW() ORDER BY start ASC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            next_appointment = {
+                'title': row[0],
+                'start': row[1],
+                'end': row[2],
+                'description': row[3],
+            }
+    sidebar_next_appointment = get_sidebar_next_appointment()
     return render(request, 'backoffice/dashboard.html', {
         'labels': labels,
         'data': data,
+        'next_appointment': next_appointment,
+        'sidebar_next_appointment': next_appointment,
     })
 
 def logout_view(request):
@@ -149,7 +238,8 @@ def manage_user_view(request):
             # Re-authenticate after password change
             user.password = hashed_password
             login(request, user)
-    return render(request, 'backoffice/manage_user.html', {'user': user, 'message': message})
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/manage_user.html', {'user': user, 'message': message, 'sidebar_next_appointment': sidebar_next_appointment})
 
 @login_required(login_url='/backoffice/login/')
 def add_user_view(request):
@@ -174,7 +264,8 @@ def add_user_view(request):
                         [username, hashed_password, role]
                     )
                     message = 'User added successfully.'
-    return render(request, 'backoffice/add_user.html', {'message': message, 'error': error})
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/add_user.html', {'message': message, 'error': error, 'sidebar_next_appointment': sidebar_next_appointment})
 
 @login_required(login_url='/backoffice/login/')
 def add_picture_view(request):
@@ -225,7 +316,8 @@ def add_picture_view(request):
                 message = f'{saved_count} picture(s) uploaded and resized.'
             elif not error:
                 error = 'No pictures were uploaded.'
-    return render(request, 'backoffice/add_picture.html', {'message': message, 'error': error})
+    sidebar_next_appointment = get_sidebar_next_appointment()
+    return render(request, 'backoffice/add_picture.html', {'message': message, 'error': error, 'sidebar_next_appointment': sidebar_next_appointment})
 
 
 # Picture management (list/delete)
@@ -280,10 +372,12 @@ def manage_pictures_view(request):
         row = cursor.fetchone()
         if row:
             about_url = row[0]
+    sidebar_next_appointment = get_sidebar_next_appointment()
     return render(request, 'backoffice/manage_pictures.html', {
         'pictures': pictures,
         'message': message,
         'error': error,
         'banner_url': banner_url,
         'about_url': about_url,
+        'sidebar_next_appointment': sidebar_next_appointment,
     })

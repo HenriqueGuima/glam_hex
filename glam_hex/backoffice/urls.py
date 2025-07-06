@@ -11,4 +11,5 @@ urlpatterns = [
     path('manage-pictures/', views.manage_pictures_view, name='backoffice_manage_pictures'),
     path('upload-banner/', views.upload_banner_view, name='backoffice_upload_banner'),
     path('upload-about-picture/', views.upload_about_picture_view, name='backoffice_upload_about_picture'),
+    path('calendar/', views.calendar_view, name='backoffice_calendar'),
 ]

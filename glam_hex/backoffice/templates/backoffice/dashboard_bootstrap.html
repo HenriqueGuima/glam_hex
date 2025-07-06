@@ -29,8 +29,21 @@
                     <li class="nav-item"><a class="nav-link {% if request.path == '/backoffice/add-user/' %}active{% endif %}" href="{% url 'backoffice_add_user' %}"><i class="bi bi-person-plus"></i> Add User</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.path == '/backoffice/add-picture/' %}active{% endif %}" href="{% url 'backoffice_add_picture' %}"><i class="bi bi-image"></i> Add Picture</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.path == '/backoffice/manage-pictures/' %}active{% endif %}" href="{% url 'backoffice_manage_pictures' %}"><i class="bi bi-images"></i> Manage Pictures</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/backoffice/calendar/' %}active{% endif %}" href="{% url 'backoffice_calendar' %}"><i class="bi bi-calendar-event"></i> Calendar</a></li>
                     <li class="nav-item"><a class="nav-link" href="/" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Frontoffice</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'backoffice_logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    {% if sidebar_next_appointment %}
+                    <li class="nav-item mt-4">
+                        <div class="bg-white text-dark rounded shadow-sm p-2 d-flex align-items-center" style="gap:0.5em;">
+                            <span class="badge bg-primary me-2" style="font-size:1.1em;"><i class="bi bi-alarm"></i></span>
+                            <div>
+                                <div class="fw-bold small">Next Appointment</div>
+                                <div class="small">{{ sidebar_next_appointment.title|truncatechars:24 }}</div>
+                                <div class="text-muted small">{{ sidebar_next_appointment.start|date:'M d, Y H:i' }}</div>
+                            </div>
+                        </div>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </nav>
